@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% if session["name"] %}
+        <div class="stats-container">
+            <h2 class="stats-titles">Statistiques du Joueur</h2>
+            <p class="stats-text">Pseudo : <span>{{ session["name"]}}</span></p>
+            <p class="stats-text">Pièces : <span>{{ session["coins"]}}</span></p>
+            <p class="stats-text">Ere : <span>{{ session["era"]}}</span></p>
+            <p class="stats-text">Niveau : <span>{{ session["levelNum"]}}</span></p>
+        </div>
+    {% else %}
+        <meta http-equiv="refresh" content="0; URL={{ url_for('account')}}">
+    {% endif %}
+{% endblock %}

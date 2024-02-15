@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="login-container">
+        <div class="login-box">
+            <h1 class="login-title">Créer un compte</h1>
+            <form action="{{ url_for('signin') }}" method="post" class="login-form" onsubmit="return validatePassword()">
+                <input type="text" name="name" placeholder="Pseudo" class="login-input" required>
+                <input type="password" name="password" id="password" placeholder="Mot de passe" class="login-input" required>
+                <input type="password" id="confirm_password" placeholder="Confirmer le mot de passe" class="login-input" required>
+                {% if messageError %}
+                    <p>{{messageError}}</p>
+                {% endif %}
+                <button type="submit" class="login-button">S'inscrire</button>
+            </form>
+            <p class="signup-login-link">Déjà un compte ? <a href="{{ url_for('account') }}">Connectez-vous</a></p>
+        </div>
+    </div>
+
+    <script>
+        function validatePassword() {
+            var password = document.getElementById("password").value;
+            var confirm_password = document.getElementById("confirm_password").value;
+
+            if (password !== confirm_password) {
+                alert("Les mots de passe doivent être identiques.");
+                return false;
+            }
+            return true;
+        }
+    </script>
+{% endblock %}

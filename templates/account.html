@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% if session["name"] %}
+        <meta http-equiv="refresh" content="0; URL={{ url_for('level')}}">
+        <p>Si tu vois ca c'est que c'est cassé! 🤣</p>
+        
+    {% else %}
+        <div class="login-container">
+            <div class="login-box">
+                <h1 class="login-title">Connexion à votre compte</h1>
+                <form action="{{ url_for('account') }}" method="post" class="login-form">
+                    <input type="text" name="name" placeholder="Pseudo" class="login-input">
+                    <input type="password" name="password" placeholder="Mot de passe" class="login-input">
+                    {% if messageError %}
+                        <p>{{messageError}}</p>
+                    {% endif %}
+                    <button type="submit" class="login-button">Connexion</button>
+                </form>
+                <p class="signup-login-link">Pas encore de compte ? <a href="{{ url_for('signin')}}">Créer son compte</a></p>
+            </div>
+        </div>
+    {% endif %}    
+
+{% endblock %}

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Era Traveler</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css')}}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/game-logo-30x30.png')}}">
+</head>
+
+<body style="background-color: rgb(191, 166, 138);">
+    <nav id="navbar">
+        <a href="{{ url_for('level')}}">
+            <img src="{{ url_for('static', filename='images/game-logo-512x512.png')}}" alt="logo" width="100" height="auto" style="margin-left: 15px;">
+        </a>
+        <a href="{{ url_for('level')}}">
+            <img src="{{ url_for('static', filename='images/era-traveler.png')}}" alt="Era Traveler" width="300" height="auto" style="margin-left: 15px;">
+        </a>
+        
+        {% if session["name"] %}
+            <a id="menu-toggle" href="#">
+                <img class="logo-navbar" src="{{ url_for('static', filename='images/open-menu.png')}}" alt="Menu" width="100" height="auto">
+            </a>
+            <div class="dropdown">
+                <a class="dropdown-title" href="{{ url_for('stats')}}">Statistiques</a>
+                <a class="dropdown-title" href="/logout">Déconnexion</a>
+            </div>
+        {% else %}
+            <div class="navbar-btns">
+                <a class="navbar-txt" href="{{ url_for('account')}}"><button class="navbar-btn">Connexion</button></a>
+                <a class="navbar-txt" href="{{ url_for('signin')}}"><button class="navbar-btn">Inscription</button></a>
+            </div>
+        {% endif %}
+    </nav>
+
+    <div id="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="footer">
+        <div class="footer-items">
+            <p>● Créé par Daphné Fiocco, Quentin Stempfer, Sami Paris et Mathéo Delvert ●</p>
+            <p>© Tout droits réservés</p>
+        </div>
+    </footer>
+
+</body>
+
+
+
+<script>
+    const dropdown = document.querySelector(".dropdown");
+    const menuToggle = document.getElementById("menu-toggle");
+
+    let isMenuOpen = false;
+
+    menuToggle.addEventListener("click", () => {
+        if (isMenuOpen) {
+            document.querySelector("img.logo-navbar").src = "{{ url_for('static', filename='images/open-menu.png')}}";
+            dropdown.style.display = "none";
+            isMenuOpen = false;
+        } 
+        else {
+            dropdown.style.display = "block";
+            document.querySelector("img.logo-navbar").src = "{{ url_for('static', filename='images/close-menu.png')}}";
+            isMenuOpen = true;
+        }
+    });
+
+    window.addEventListener("keydown", function(e) {
+        if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+            e.preventDefault();
+        }
+    }, false);
+</script>
+
+</html>

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="confirmation-container">
+        <div class="confirmation-box">
+            <h1 class="confirmation-title">Compte créé avec succès</h1>
+            <p class="confirmation-message">Félicitations, votre compte a été créé avec succès. Vous pouvez maintenant vous connecté et accéder au jeu.</p>
+            <a href="{{ url_for('account')}}" class="confirmation-button">Connexion</a>
+        </div>
+    </div>
+{% endblock %}

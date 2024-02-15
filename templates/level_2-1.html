@@ -1,0 +1,705 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="hey">Salut {{ session["name"]}} ! &#128400</h1>
+{% if session["name"] %}
+    <div class="index-container">
+        <!-- Pop-In Reset -->
+        <div id="popinIdReset" class="popin-hidden">
+            <div class="reset-popin-content" data-reset="{{ url_for('reset')}}">
+                <span class="close-btn">&times;</span>
+                <h3>Etes vous sur de vouloir effacer votre progression ?</h3>
+                <p id="reset-message">Il vous sera impossible de la récupérer !</p>
+                <div id="popin-reset-container">
+                    <button id="cancelButton" class="popin-btn">Annuler</button>
+                    <button id="confirmButton" class="popin-btn">Confirmer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pop-In niveau -->
+        <div id="popinniv" class="popin-hidden">
+                <h2>Niveau {{ session['levelNum']}}</h2>
+        </div>
+
+
+        <div class="game" data-level="{{ url_for('save') }}">
+            <audio id="bgMusic" autoplay loop>
+                <source src="{{ url_for('static', filename='musics/bgsound.mp3') }}" type="audio/mpeg">
+            </audio>
+            <img id="backgroundImg" src="..\static\images\lvl_1.png" style="display:none;">
+            <img id="coinImg" src="..\static\images\coins.png" style="display:none;">
+            <img id="playerImg" src="..\static\images\joueur_marche.png" style="display:none;">
+            <img id="playerImgLeft" src="..\static\images\joueur_marche_gauche.png" style="display:none;">
+            <img id="itemImg" src="..\static\images\key.png" style="display:none;">
+            <img id="slimeImg" src="..\static\images\slimaon.png" style="display:none;">
+            <img id="redflagImg" src="..\static\images\rouge.png" style="display:none;">
+            <img id="greenflagImg" src="..\static\images\vert.png" style="display:none;">
+            <canvas id="canvas"></canvas>
+            <div id="overlay">
+                <p>Jeu en pause</p>
+            </div>
+        </div>
+        <div class="rules">
+            <div class="game-btn">
+                <button id="resetButton">Reset</button>
+                <button id="pauseButton" onclick="togglePause()">Pause</button>
+            </div>
+            <div class="keys">
+                <div class="keys-title">
+                    <h1>Mode de saisie :</h1>
+                </div>
+
+                <form action="{{url_for('level')}}" method="post" class="">
+                    <div class="keys-imgs">
+                        <img src="{{ url_for('static', filename='images/arrows.png')}}" alt="Flèches">
+                        <label class="switch">
+                            <input type="checkbox" id="inputToggle" onchange="keys_settings(this)">
+
+                            <span class="slider round"></span>
+                        </label>
+                        <img src="{{ url_for('static', filename='images/ZQSD.png')}}" alt="ZQSD">
+                    </div>
+                </form>
+            </div>
+            <div>
+                <div class="rules-title">
+                    <h1>But du jeu :</h1>
+                </div>
+                <p>Le but du jeu est simple. Vous vous baladez dans différentes ères.</p>
+                <p>Pour réussir un niveau, vous devez vous rendre au petit drapeau indiquant l'arrivée tout en collectant un
+                    objet nécessaire à l'ouverture de la cage du dragon qui vous emmène dans l'ère suivante.</p>
+                <p>Vous pouvez aussi collecter des pièces vous permettant de racheter des vies.</p>
+                <p>Vous disposez de 3 vies par niveau, dans le cas où vous n'avez plus de vie vous repartez au premier
+                    niveau de l'ère.</p>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <meta http-equiv="refresh" content="0; URL={{ url_for('account')}}">
+{% endif %}
+
+<!-- --------------------------------------------------------------------------------------------------------------------------- -->
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the audio element
+        const bgMusic = document.getElementById('bgMusic');
+
+        // Play the music
+        bgMusic.play();
+    });
+
+    // ======================== Pop-in RESET ========================
+    document.addEventListener('DOMContentLoaded', (event) => {
+
+        var resetButton = document.getElementById('resetButton');
+        var popin = document.getElementById('popinIdReset');
+        var closeButton = popin.querySelector('.close-btn');
+        var cancelButton = document.getElementById('cancelButton');
+        var confirmButton = document.getElementById('confirmButton');
+
+        // Affichage du pop-in
+        function openPopin() {
+            popin.classList.remove('popin-hidden');
+        }
+
+        // Fermeture du pop-in
+        function closePopin() {
+            popin.classList.add('popin-hidden');
+        }
+
+        // Appel route /save
+        function resetSave() {
+            localStorage.clear()
+            const reset_save = document.querySelector("div.reset-popin-content")
+            console.log(reset_save.getAttribute("data-reset"));
+            window.location.href = reset_save.getAttribute("data-reset");
+            return;
+        }
+
+        // Écouteur d'événement pour ouvrir le pop-in
+        resetButton.addEventListener('click', openPopin);
+
+        // Écouteur d'événement pour fermer le pop-in avec le bouton "X"
+        closeButton.addEventListener('click', closePopin);
+
+        // Écouteur d'événement pour fermer le pop-in avec le bouton "Annuler"
+        cancelButton.addEventListener('click', closePopin);
+
+        // Écouteur d'événement pour confirmer le reset
+        confirmButton.addEventListener('click', resetSave)
+
+        // Fermer le pop-in quand on clique à l'extérieur de celui-ci
+        window.addEventListener('click', function(event) {
+            if (event.target == popin) {
+                closePopin();
+            }
+        });
+    });
+
+    // ======================== Pop-in NIVEAU ========================*
+    document.addEventListener('DOMContentLoaded', function() {
+        // Affichage du pop-in niveau
+        setTimeout(function() {
+            document.getElementById('popinniv').classList.remove('popin-hidden');
+        }, 0); // Affiche le pop-in après 2 secondes (2000 ms)
+
+        // Fermeture du pop-in niveau
+        setTimeout(function() {
+            document.getElementById('popinniv').remove();
+        }, 1000); // Affiche le pop-in après 2 secondes (2000 ms)
+    });
+
+    // ======================== Gestion des touches ========================
+    let keyssettingsserialized = localStorage.getItem("keyssettings");
+    let keyssettings = JSON.parse(keyssettingsserialized);
+
+    function keys_settings(event) {
+        console.log(event);
+        if (event.checked === true) {
+            keyssettings.value = 1;
+            console.log(keyssettings);
+        } else {
+            keyssettings.value = 0;
+            console.log(keyssettings);
+        }
+    
+        // MàJ de local storage avec la nouvelle valeur
+        let keyssettingsserialized = JSON.stringify(keyssettings);
+        localStorage.setItem("keyssettings", keyssettingsserialized);
+    }
+
+    // Affichage du menu pause
+    let isPaused = false;
+    let animationFrameId;
+    
+    function togglePause() {
+        isPaused = !isPaused;
+
+        let overlay = document.getElementById("overlay");
+
+        if (isPaused) {
+            overlay.style.display = "flex";
+        } else {
+            overlay.style.display = "none";
+            // If unpaused, start or resume the game loop
+            requestAnimationFrame(loop);
+        }
+    }
+
+    let playerLives = 3;
+
+    function resetGame() {
+        location.reload();
+    }
+    
+    let collected_coins = 0;
+
+    // Joueur
+    let player = {
+        x: 300,
+        y: 620,
+        x_v: 0,
+        y_v: 0,
+        jump: true,
+        height: 50,
+        width: 50
+    };
+
+    // Statut flèches directionelles
+    let keys = {
+        right: false,
+        left: false,
+        up: false,
+    };
+
+    // Frixion et gravité  
+    let gravity = 0.23;
+    let friction = 0.7;
+    
+    // Pièces et objets
+    let coins = [];
+    let item1collecte = 0;
+    let items = [];
+
+    items.push(
+        {      
+            x: 72,
+            y: 450,
+            width: 50,
+            height: 50
+        }
+    )
+
+    // Afficher l'objet
+    function renderitems() {
+        let itemImg = document.getElementById("itemImg");
+        ctx.drawImage(itemImg, items[0].x, items[0].y, items[0].width - 20, items[0].height - 20);
+    }
+
+    let exit = [];
+
+    exit.push(
+        {
+            x: 1440,
+            y: 190,
+            width: 50,
+            height: 50
+        }
+    )
+    
+    // Changement couleur drapeau
+    function renderexitred() {
+        let redflagImg = document.getElementById("redflagImg");
+        ctx.drawImage(redflagImg, exit[0].x+5, exit[0].y-15, exit[0].width+10, exit[0].height);
+    }
+    function renderexitgreen() {
+        let redflagImg = document.getElementById("greenflagImg");
+        ctx.drawImage(greenflagImg, exit[0].x+5, exit[0].y-15, exit[0].width +10, exit[0].height);
+    }
+
+
+
+
+    let platforms = [];
+
+    // Affichage du canvas
+    function rendercanvas() {
+        let img = document.getElementById("backgroundImg");
+        ctx.drawImage(img, 0, 0, 1536, 780);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+        ctx.drawImage(img, 0, 0, 1536, 780);
+    }
+
+    let enemies = [];
+
+    enemies.push({
+        x: 0,
+        y: 460,
+        width: 50,
+        height: 75,
+        x_v: 1.5,
+    });
+    enemies.push({
+        x: 985,
+        y: 380,
+        width: 50,
+        height: 75,
+        x_v: 0.75,
+    });
+    enemies.push({
+        x: 1035,
+        y: 5,
+        width: 75,
+        height: 280,
+        x_v: 1,
+    });
+    enemies.push({
+        x: 1035,
+        y: 285,
+        width: 50,
+        height: 55,
+        x_v: 1,
+    });
+
+    // Affichage des ennemies
+    function renderenemies() {
+        let slimeImg = document.getElementById("slimeImg");
+        ctx.drawImage(slimeImg, enemies[0].x, enemies[0].y, enemies[0].width , enemies[0].height-10);
+        ctx.drawImage(slimeImg, enemies[1].x, enemies[1].y, enemies[1].width , enemies[1].height-10);
+        ctx.fillStyle = "rgba(255, 255, 255, 0)";
+        ctx.fillRect(enemies[2].x, enemies[2].y, enemies[2].width, enemies[2].height);
+        ctx.fillRect(enemies[3].x, enemies[3].y, enemies[3].width, enemies[3].height);
+    }
+
+    function updateEnemies() {
+        enemies[0].x += enemies[0].x_v;
+        const platformRightBoundary0 = platforms[0].x + platforms[0].width;
+        if (enemies[0].x <= platforms[0].x || enemies[0].x + enemies[0].width >= platformRightBoundary0) {
+            enemies[0].x_v = -enemies[0].x_v;
+        }
+        enemies[1].x += enemies[1].x_v;
+        const platformRightBoundary3 = platforms[3].x + platforms[3].width;
+        if (enemies[1].x <= platforms[3].x || enemies[1].x + enemies[1].width >= platformRightBoundary3) {
+            enemies[1].x_v = -enemies[1].x_v;
+        }
+    }
+
+    function setInitialSliderState() {
+        let slider = document.getElementById("inputToggle");
+        if (keyssettings.value === 1) {
+            slider.checked = true; // If keyssettings value is 1, toggle the slider to the right
+        } else {
+            slider.checked = false; // If keyssettings value is 0, toggle the slider to the left
+        }
+    }
+    
+    setInitialSliderState();
+
+    // Function to render the player
+    function renderplayer() {
+        let playerImg = document.getElementById("playerImg");
+        let playerImgLeft = document.getElementById("playerImgLeft");
+        if (player.x_v >= 0){
+        ctx.drawImage(playerImg, player.x -20, player.y -50, player.width, player.height);
+        }
+        if (player.x_v < 0){
+            ctx.drawImage(playerImgLeft, player.x -20, player.y -50, player.width, player.height); 
+        }
+    }
+    //create platforms
+    platforms.push(
+        {
+            x: 0,
+            y: 520,
+            width: 220,
+            height: 50
+        }
+    )
+    platforms.push(
+        {
+            x: 220,
+            y: 635,
+            width: 185,
+            height: 50
+        }
+    )
+    platforms.push(
+        {
+            x: 345,
+            y: 420,
+            width: 170,
+            height: 15
+        }
+    )
+    platforms.push(
+        {
+            x: 980,
+            y: 445,
+            width: 240,
+            height: 15
+        }
+    )
+    platforms.push(
+        {
+            x: 625,
+            y: 365,
+            width: 158,
+            height: 15
+        }
+    )
+    platforms.push(
+        {
+            x: 1345,
+            y: 230,
+            width: 210,
+            height: 15
+        }
+    )
+    // Function to render platforms
+    function renderplat() {
+        ctx.fillStyle = "#00000000";
+        ctx.fillRect(platforms[0].x, platforms[0].y, platforms[0].width, platforms[0].height);
+        ctx.fillRect(platforms[1].x, platforms[1].y, platforms[1].width, platforms[1].height);
+        ctx.fillRect(platforms[2].x, platforms[2].y, platforms[2].width, platforms[2].height);
+        ctx.fillRect(platforms[3].x, platforms[3].y, platforms[3].width, platforms[3].height);
+        ctx.fillRect(platforms[4].x, platforms[4].y, platforms[4].width, platforms[4].height);
+        ctx.fillRect(platforms[5].x, platforms[5].y, platforms[5].width, platforms[5].height);
+
+    }
+
+    coins.push(
+        {
+            x: 385,
+            y: 380,
+            width: 50,
+            height: 50
+        }
+    )
+    coins.push(
+        {
+            x: 675,
+            y: 325,
+            width: 50,
+            height: 50
+        }
+    )
+    coins.push(
+        {
+            x: 1040,
+            y: 405,
+            width: 50,
+            height: 50
+        }
+    )
+
+    function rendercoin() {
+        let coinImg = document.getElementById("coinImg");
+        ctx.drawImage(coinImg, coins[0].x, coins[0].y, coins[0].width-20, coins[0].height-20);
+        ctx.drawImage(coinImg, coins[1].x, coins[1].y, coins[1].width-20, coins[1].height-20);
+        ctx.drawImage(coinImg, coins[2].x, coins[2].y, coins[2].width-20, coins[2].height-20);
+    }
+
+    // Function to render the collected coins counter
+    function renderCounter() {
+        ctx.fillStyle = "#000000";
+        ctx.font = "20px Arial";
+        ctx.fillText("Pièces collectées: " + collected_coins, 20, 40);
+        ctx.fillText("Vies: " + playerLives, 20, 70);
+    
+        // Display collected items with their images
+        for (let i = 0; i < item1collecte; i++) {
+            let itemImg = document.getElementById("itemImg"); 
+            ctx.drawImage(itemImg, 20 + i * 30, 100, 20, 20);
+        }
+    }
+    
+
+    let up=0
+    let right=0
+    let left=0
+    function changekeys(keyssettings){
+        if (keyssettings.value === 0){
+            up= 38;
+            left=37;
+            right=39;
+        }else{
+            up=32;
+            left=81;
+            right=68;
+        }
+    }
+
+    // This function will be called when a key on the keyboard is pressed
+    function keydown(e) {
+        // 37 is the code for the left arrow key
+        if (e.keyCode == left) {
+            keys.left = true;
+        }
+        // 38 is the code for the up arrow key
+        if (e.keyCode == up) {
+            if (player.jump == false) {
+                player.y_v = -10;
+            }
+        }
+        // 39 is the code for the right arrow key
+        if (e.keyCode == right) {
+            keys.right = true;
+        }
+        if (e.keyCode == 80) {
+            togglePause();
+        }
+    }
+    // This function is called when the pressed key is released
+    function keyup(e) {
+        if (e.keyCode == left) {
+            keys.left = false;
+        }
+        if (e.keyCode == up) {
+            if (player.y_v < -2) {
+                player.y_v = -3;
+            }
+        }
+        if (e.keyCode == right) {
+            keys.right = false;
+        }
+    }
+
+    function nextLevel() {
+        const game = document.querySelector("div.game")
+        fetch('http://127.0.0.1:5000' + game.getAttribute("data-level"), {
+            method:'POST',
+            headers:{
+                    'content-type': 'application/json',
+            },
+            body: JSON.stringify({coins: collected_coins}),
+        })
+        .then(r => r.json())
+        .then(datas => {
+            console.log(datas)
+            window.location.href = datas.level 
+        })
+        .catch(err => {
+            console.log('Server error:', err)
+        })
+    }
+
+    function redirect(){
+        const game = document.querySelector("div.game")
+        console.log(game.getAttribute("data-level"));
+        window.location.href = game.getAttribute("data-level");
+        return;
+    } 
+
+    function loop() {
+        // If the player is not jumping apply the effect of friction
+        if (player.jump == false) {
+            player.x_v *= friction;
+        } else {
+            // If the player is in the air then apply the effect of gravity
+            player.y_v += gravity;
+        }
+        player.jump = true;
+        // If the left key is pressed increase the relevant horizontal velocity
+        if (keys.left) {
+            player.x_v = -6.5;
+        }
+        if (keys.right) {
+            player.x_v = 6.5;
+        }
+        // Updating the y and x coordinates of the player
+        player.y += player.y_v;
+        player.x += player.x_v;
+        // Reset player position if it falls out of canvas
+        if (player.y > ctx.canvas.height) {
+            // Reset player position to starting position
+            player.x = 300;
+            player.y = 620;
+            player.y_v = 0.1;
+            player.x_v = 0.1;
+            playerLives = playerLives -1;
+        }
+        // A simple code that checks for collisions with the platform
+        let i = -1;
+        if (platforms[0].x < player.x && player.x < platforms[0].x + platforms[0].width &&
+            platforms[0].y < player.y && player.y < platforms[0].y + platforms[0].height) {
+            i = 0;
+        }
+        if (platforms[1].x < player.x && player.x < platforms[1].x + platforms[1].width &&
+            platforms[1].y < player.y && player.y < platforms[1].y + platforms[1].height) {
+            i = 1;
+        }
+        if (platforms[2].x < player.x && player.x < platforms[2].x + platforms[2].width &&
+            platforms[2].y < player.y && player.y < platforms[2].y + platforms[2].height) {
+            i = 2;
+        }
+        if (platforms[3].x < player.x && player.x < platforms[3].x + platforms[3].width &&
+            platforms[3].y < player.y && player.y < platforms[3].y + platforms[3].height) {
+            i = 3;
+        }
+        if (platforms[4].x < player.x && player.x < platforms[4].x + platforms[4].width &&
+            platforms[4].y < player.y && player.y < platforms[4].y + platforms[4].height) {
+            i = 4;
+        }
+        if (platforms[5].x < player.x && player.x < platforms[5].x + platforms[5].width &&
+            platforms[5].y < player.y && player.y < platforms[5].y + platforms[5].height) {
+            i = 5;
+        }
+        if (i > -1) {
+            player.jump = false;
+            player.y = platforms[i].y;
+        }
+        let j = -1;
+        if (coins[0].x < player.x && player.x < coins[0].x + coins[0].width &&
+            coins[0].y < player.y && player.y < coins[0].y + coins[0].height) {
+            j = 0;
+        }
+        if (coins[1].x < player.x && player.x < coins[1].x + coins[1].width &&
+        coins[1].y < player.y && player.y < coins[1].y + coins[1].height) {
+        j = 1;
+        }
+        if (coins[2].x < player.x && player.x < coins[2].x + coins[2].width &&
+        coins[2].y < player.y && player.y < coins[2].y + coins[2].height) {
+        j = 2;
+        }
+        if (j > -1) {
+            // Set the coin coordinates outside the visible area
+            coins[j].x = -100;
+            coins[j].y = -100;
+            collected_coins = collected_coins + 1
+        }
+        let g = -1;
+        if (items[0].x < player.x && player.x < items[0].x + items[0].width &&
+            items[0].y < player.y && player.y < items[0].y + items[0].height) {
+            g = 0;
+        }
+        if (g > -1) {
+            // Set the coin coordinates outside the visible area
+            items[g].x = -100;
+            items[g].y = -100;
+            item1collecte = 1
+        }
+        if (enemies[0].x < player.x && player.x < enemies[0].x + enemies[0].width &&
+        enemies[0].y < player.y && player.y < enemies[0].y + enemies[0].height){
+            player.x = 300;
+            player.y = 620;
+            player.y_v = 0.1;
+            player.x_v = 0.1;
+            playerLives = playerLives - 1;
+        }
+        if (enemies[1].x < player.x && player.x < enemies[1].x + enemies[1].width &&
+        enemies[1].y < player.y && player.y < enemies[1].y + enemies[1].height){
+            player.x = 300;
+            player.y = 620;
+            player.y_v = 0.1;
+            player.x_v = 0.1;
+            playerLives = playerLives - 1;
+        }
+        if (enemies[2].x < player.x && player.x < enemies[2].x + enemies[2].width &&
+            enemies[2].y < player.y && player.y < enemies[2].y + enemies[2].height){
+            player.x = 300;
+            player.y = 620;
+            player.y_v = 0.1;
+            player.x_v = 0.1;
+            playerLives = playerLives - 1;
+        }
+        if (enemies[3].x < player.x && player.x < enemies[3].x + enemies[3].width &&
+            enemies[3].y < player.y && player.y < enemies[3].y + enemies[3].height){
+            player.x = 300;
+            player.y = 620;
+            player.y_v = 0.1;
+            player.x_v = 0.1;
+            playerLives = playerLives - 1;
+        }
+
+        if (playerLives === 0){
+            resetGame();
+            return;
+        }
+        if (exit[0].x < player.x && player.x < exit[0].x + exit[0].width &&
+        exit[0].y < player.y && player.y < exit[0].y + exit[0].height) {
+        if (item1collecte === 1){
+                nextLevel()
+                return;
+        }
+        }
+        // Rendering the canvas, the player, the platforms, and the coin counter
+        rendercanvas();
+        renderplayer();
+        renderplat();
+        rendercoin();
+        renderitems();  
+        renderenemies();
+        renderCounter();
+        if (item1collecte===0){
+            renderexitred();
+            }
+            else{
+            renderexitgreen();
+        }
+        
+        changekeys(keyssettings);
+        updateEnemies();
+        if (!isPaused) {
+            animationFrameId = requestAnimationFrame(loop);
+        }
+    }
+    canvas = document.getElementById("canvas");
+    ctx = canvas.getContext("2d");
+    ctx.canvas.height = 780;
+    ctx.canvas.width = 1536;
+    // Adding the event listeners
+    document.addEventListener("keydown", keydown);
+    document.addEventListener("keyup", keyup);
+    requestAnimationFrame(loop);
+
+    document.addEventListener("keydown", (event) => {
+        if (event.keyCode === 78) {
+            nextLevel()
+        }
+    })
+</script>
+
+{% endblock %}

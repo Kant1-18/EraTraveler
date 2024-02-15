@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="hey">Salut {{ session["name"]}} ! &#128400</h1>
+{% if session["name"] %}
+<div class="index-container">
+
+    <!-- Pop-In Reset -->
+    <div id="popinIdReset" class="popin-hidden">
+        <div class="reset-popin-content" data-reset="{{ url_for('reset')}}">
+            <span class="close-btn">&times;</span>
+            <h3>Etes vous sur de vouloir effacer votre progression ?</h3>
+            <p id="reset-message">Il vous sera impossible de la récupérer !</p>
+            <div id="popin-reset-container">
+                <button id="cancelButton" class="popin-btn">Annuler</button>
+                <button id="confirmButton" class="popin-btn">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="game_end">
+        <h2>Bien joué {{ session["name"]}}, vous  venez de finir le jeu !</h2>
+        <img src="{{ url_for('static', filename='images/yipeee.png')}}">
+        <p>Prochains niveaux à venir ...</p>
+
+    </div>
+    <div class="rules">
+        <div class="game-btn">
+            <!-- Reset button -->
+            <button id="resetButton">Reset</button>
+            <!-- Pause button -->
+            <button id="pauseButton" onclick="togglePause()">Pause</button>
+            <!-- Pause overlay -->
+        </div>
+        <div class="keys">
+            <div class="keys-title">
+                <h1>Mode de saisie :</h1>
+            </div>
+            <form action="{{url_for('level')}}" method="post" class="">
+                <div class="keys-imgs">
+                    <img src="{{ url_for('static', filename='images/arrows.png')}}" alt="Flèches">
+                    <label class="switch">
+                        <input type="checkbox" id="inputToggle" onchange="keys_settings(this)">
+
+                        <span class="slider round"></span>
+                    </label>
+                    <img src="{{ url_for('static', filename='images/ZQSD.png')}}" alt="ZQSD">
+                </div>
+            </form>
+        </div>
+        <div>
+            <div class="rules-title">
+                <h1>But du jeu :</h1>
+            </div>
+            <p>Le but du jeu est simple. Vous vous baladez dans différentes ères.</p>
+            <p>Pour réussir un niveau, vous devez vous rendre au petit drapeau indiquant l'arrivée tout en collectant un
+                objet nécessaire à l'ouverture de la cage du dragon qui vous emmène dans l'ère suivante.</p>
+            <p>Vous pouvez aussi collecter des pièces vous permettant de racheter des vies.</p>
+            <p>Vous disposez de 3 vies par niveau, dans le cas où vous n'avez plus de vie vous repartez au premier
+                niveau de l'ère.</p>
+        </div>
+    </div>
+</div>
+{% else %}
+    <meta http-equiv="refresh" content="0; URL={{ url_for('account')}}">
+{% endif %}
+
+<script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+    // Sélection du bouton reset
+    var resetButton = document.getElementById('resetButton');
+    
+    // Sélection du pop-in et du bouton de fermeture
+    var popin = document.getElementById('popinIdReset');
+    var closeButton = popin.querySelector('.close-btn');
+    var cancelButton = document.getElementById('cancelButton');
+    var confirmButton = document.getElementById('confirmButton');
+
+    // Fonction pour ouvrir le pop-in
+    function openPopin() {
+        popin.classList.remove('popin-hidden');
+    }
+
+    // Fonction pour fermer le pop-in
+    function closePopin() {
+        popin.classList.add('popin-hidden');
+    }
+
+    function resetSave() {
+        localStorage.clear()
+        const reset_save = document.querySelector("div.reset-popin-content")
+        console.log(reset_save.getAttribute("data-reset"));
+        window.location.href = reset_save.getAttribute("data-reset");
+        return;
+    }
+
+    // Écouteur d'événement pour ouvrir le pop-in
+    resetButton.addEventListener('click', openPopin);
+
+    // Écouteur d'événement pour fermer le pop-in
+    closeButton.addEventListener('click', closePopin);
+
+    // Écouteur d'événement pour fermer le pop-in avec le bouton "Annuler"
+    cancelButton.addEventListener('click', closePopin);
+
+    confirmButton.addEventListener('click', resetSave)
+
+    // Optionnel : Fermer le pop-in quand on clique à l'extérieur de celui-ci
+    window.addEventListener('click', function(event) {
+        if (event.target == popin) {
+            closePopin();
+        }
+        });
+    });
+</script>
+
+{% endblock %}
