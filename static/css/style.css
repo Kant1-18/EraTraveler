@@ -31,7 +31,9 @@
 }
 
 body {
+    position: relative;
     font-family: 'MaPoliceRetro', cursive;
+    padding-bottom: 45px;
 }
 
 
@@ -112,8 +114,11 @@ body {
 }
 
 .footer {
+    background-color: rgb(143, 120, 94);
     position: fixed;
-    margin-left: 25%;
+    bottom: 0;
+    right: 0;
+    left:0;
 }
 
 .footer-items {
